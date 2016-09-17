@@ -61,29 +61,29 @@
       var pendingOperations = pages;
 
       for (var i = 0; i < pages; i++) {
-        setTimeout(function () {
-          directionsService.getDistanceMatrix({
-            origins: [map.getCenter()],
-            destinations: locationMatrix.map(x => x.location).slice(i * 25, i * 25 + 25),
-            travelMode: 'TRANSIT',
-            transitOptions: {
-              departureTime: new Date(2016, 9, 17, 8, 0, 0)
-            },
-          }, (data) => {
-            try {
-              data.rows[0].elements.map((element, idx) => {
-                var elementIdx = i * 25 + idx;
-                var duration = element.duration;
-                locationMatrix[elementIdx].weight = duration.value;
-                return locationMatrix[elementIdx];
-              });
-            } catch (err) {
+        setTimeout(((i) => () => {
+    directionsService.getDistanceMatrix({
+      origins: [map.getCenter()],
+      destinations: locationMatrix.map(x => x.location).slice(i * 25, i * 25 + 25),
+      travelMode: 'TRANSIT',
+      transitOptions: {
+        departureTime: new Date(2016, 9, 17, 8, 0, 0)
+      },
+    }, (data) => {
+      try {
+        data.rows[0].elements.map((element, idx) => {
+          var elementIdx = i * 25 + idx;
+          var duration = element.duration;
+          locationMatrix[elementIdx].weight = duration.value;
+          return locationMatrix[elementIdx];
+        });
+      } catch (err) {
 
-            } finally {
-              pendingOperations--;
-            }
-          }, () => pendingOperations--);
-        }, i * GOOGLE_API_DELAY);
+      } finally {
+        pendingOperations--;
+      }
+    }, () => pendingOperations--);
+  })(i), i * GOOGLE_API_DELAY);
       }
 
       var interval = setInterval(() => {
