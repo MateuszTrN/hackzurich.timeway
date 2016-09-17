@@ -12,10 +12,8 @@
   var HEATMAP_RADIUS = 100;
   var GOOGLE_ZOOM_LEVEL = 14;
   
-
   var map;
   var directionsService = new google.maps.DistanceMatrixService();
-  var heatMap;
   var currentPosition;
   var heatmapInstance;
 
@@ -23,13 +21,19 @@
     if (heatmapInstance) {
       heatmapInstance.setMap(null)
     }
-    // console.log(gridData.map(function(a) {return a.weight}));
+    var travelTimes = gridData.map(function(a) {return a.weight});
+    var gradientStops = ['rgba(0, 0, 0, 1)','rgba(0, 255, 0, 0.5)','rgba(255,255,0,0.5)','rgba(255,0,0,0.5)'];
     heatmapInstance = new google.maps.visualization.HeatmapLayer({
       data: gridData,
       dissipating: true,
       radius: HEATMAP_RADIUS,
-      gradient: ['rgba(0, 0, 0, 1)','rgba(0, 255, 0, 0.5)','rgba(255,255,0,0.5)','rgba(255,0,0,0.5)']
+      gradient: gradientStops
     });
+      document.getElementById("infobox").style.display = "none";
+      document.getElementById("legend").style.display = "table";
+      document.getElementById("colorbar").style.background = "linear-gradient(to right," + gradientStops.slice(1).join() + ")";
+      document.getElementById("legend-min").innerHTML = "Travel time: 0";
+      document.getElementById("legend-max").innerHTML = Math.ceil(Math.max.apply(Math, travelTimes.filter(isFinite))/60) + " min";
     heatmapInstance.setMap(map);
   };
 
@@ -104,7 +108,6 @@
 
     });
   }
-
 
     var initApp = () => {
       return new Promise((resolveCoords, notsupportedGeoLocationHandler) => {
