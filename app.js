@@ -5,73 +5,102 @@
   var SEARCHBOX_ID = "search-box";
   var BOUNDS_CHANGED_EVENT = "bounds_changed";
   var PLACES_CHANGED_EVENT = "places_changed";
-  var POINT_SPACING = 200;    // pixels in between points
+  var POINT_SPACING = 45; // pixels in between points
   var DEFAULT_LOCATION = { longitude: 8.515711, latitude: 47.390193 }; // Zurich Technopark
-  var GOOGLE_API_DELAY = 500; // delay between API calls
-  var SCALING_FACTOR = 10;
-  var HEATMAP_RADIUS = 2000;
-  var GOOGLE_ZOOM_LEVEL = 13;
+  var GOOGLE_API_DELAY = 400; // delay between API calls
+  var SCALING_FACTOR = 1;
+  var HEATMAP_RADIUS = 45;
+  var GOOGLE_ZOOM_LEVEL = 12;
 
   var map;
-  var directionsService, heatMap;
+  var directionsService = new google.maps.DistanceMatrixService();
+  var heatMap;
   var currentPosition;
+  var heatmapInstance;
+
+  var generateHeatMap = (gridData) => {
+    if (heatmapInstance) {
+      heatmapInstance.setMap(null)
+    }
+
+    heatmapInstance = new google.maps.visualization.HeatmapLayer({
+      data: gridData,
+      dissipating: true,
+      radius: HEATMAP_RADIUS,
+    });
+    heatmapInstance.setMap(map);
+  };
+
+  var createLocationMatrix = () => {
+    var grid = [];
+    var southWest = map.getBounds().getSouthWest();
+    var northEast = map.getBounds().getNorthEast();
+
+    var n_width = Math.round(document.getElementById(CONTAINER_ID).offsetWidth / POINT_SPACING);
+    var n_height = Math.round(document.getElementById(CONTAINER_ID).offsetHeight / POINT_SPACING);
+
+    var delta_w = (northEast.lng() - southWest.lng()) / n_width;
+    var delta_h = (northEast.lat() - southWest.lat()) / n_height;
+
+    for (var i = 0; i < n_height; i++) {
+      for (var j = 0; j < n_width; j++) {
+        var coords = new google.maps.LatLng(southWest.lat() + (i + 0.5) * delta_h, southWest.lng() + (j + 0.5) *
+          delta_w);
+        grid.push({ location: coords });
+      }
+    }
+
+    return grid;
+  }
 
   var getGrid = () => {
     return new Promise((resolveGrid) => {
-      var grid = [];
-      var southWest = map.getBounds().getSouthWest();
-      var northEast = map.getBounds().getNorthEast();
 
-      var n_width = Math.round(document.getElementById(CONTAINER_ID).offsetWidth / POINT_SPACING);
-      var n_height = Math.round(document.getElementById(CONTAINER_ID).offsetHeight / POINT_SPACING);
+      var locationMatrix = createLocationMatrix();
+      var pages = Math.ceil(locationMatrix.length / 25);
+      var pendingOperations = pages;
 
-      var delta_w = (northEast.lng() - southWest.lng()) / n_width;
-      var delta_h = (northEast.lat() - southWest.lat()) / n_height;
+      for (var i = 0; i < pages; i++) {
+        setTimeout(function () {
+          directionsService.getDistanceMatrix({
+            origins: [map.getCenter()],
+            destinations: locationMatrix.map(x => x.location).slice(i * 25, i * 25 + 25),
+            travelMode: 'TRANSIT',
+            transitOptions: {
+              departureTime: new Date(2016, 9, 17, 8, 0, 0)
+            },
+          }, (data) => {
+            try {
+              data.rows[0].elements.map((element, idx) => {
+                var elementIdx = i * 25 + idx;
+                var duration = element.duration;
+                locationMatrix[elementIdx].weight = duration.value;
+                return locationMatrix[elementIdx];
+              });
+            } catch (err) {
 
-      var coords;
-      for (var i = 0; i < n_height; i++) {
-        for (var j = 0; j < n_width; j++) {
-          coords = new google.maps.LatLng(southWest.lat() + (i + 0.5) * delta_h,southWest.lng() + (j + 0.5) * delta_w);   
-          grid.push({ location: coords, weight: NaN});
-
-        }
+            } finally {
+              pendingOperations--;
+            }
+          }, () => pendingOperations--);
+        }, i * GOOGLE_API_DELAY);
       }
 
-      var pending = grid.length;
+      var interval = setInterval(() => {
+        if (pendingOperations < 1) {
+          clearInterval(interval);
+          resolveGrid(locationMatrix);
+        }
+      })
 
-      var delayedTimeRequest = (index) => {
-        setTimeout(() => {
-          directionsService.route({
-            origin: grid[index].location,
-            destination: currentPosition,
-            travelMode: 'TRANSIT'
-          }, (response, status) => {
-            if (status === 'OK') {
-              console.log(response.routes[0].legs[0].duration.value); //TODO remove
-              grid[index].weight = response.routes[0].legs[0].duration.value/SCALING_FACTOR;
-            } else {
-              console.log('Directions request failed due to ' + status); 
-            }
-            pending--;
-            if (!pending) {
-              resolveGrid(grid);
-            }
-          });
-        },index*GOOGLE_API_DELAY);
-      };
-
-
-      for (var i = 0; i < grid.length; i++) {
-        delayedTimeRequest(i);
-      }  
     });
-  };
+  }
 
   var initApp = () => {
     return new Promise((resolveCoords, notsupportedGeoLocationHandler) => {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(resolveCoords, notsupportedGeoLocationHandler);
-      } else {}
+      }
     });
   };
 
@@ -91,7 +120,7 @@
       disableDefaultUI: true
     });
 
-    directionsService = new google.maps.DirectionsService;
+    directionsService = new google.maps.DistanceMatrixService();
 
     initSearch();
   }
@@ -116,7 +145,7 @@
       var center = new google.maps.LatLng(
         place.geometry.location.lat(),
         place.geometry.location.lng()
-        );
+      );
 
       map.panTo(center);
       marker = new google.maps.Marker({
@@ -127,35 +156,14 @@
       });
 
       getGrid()
-       .then((grid) => { 
-        processGeoLocationPointGrid(grid);
-        generateHeatMap(grid);
-      });
+        .then((grid) => {
+          generateHeatMap(grid);
+        });
     });
   };
-
-  var processGeoLocationPointGrid = (gridData) => {
-    for (var i = 0; i < gridData.length; i++) {
-      var gridElem = gridData[i];
-      new google.maps.Marker({
-        map: map,
-        title: "Point" + i,
-        position: gridElem.location
-      });
-    }
-  };
-
-  var generateHeatMap = (gridData) => {
-    var heatmap = new google.maps.visualization.HeatmapLayer({
-      data: gridData,
-      dissipating: false
-    });
-    heatmap.setMap(map);
-  };
-
 
   initApp()
-  .then((data) => {
-    initMap(data);      
-  }, geoLocationNotSupported)
+    .then((data) => {
+      initMap(data);
+    }, geoLocationNotSupported)
 })();
