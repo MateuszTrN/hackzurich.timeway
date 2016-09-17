@@ -1,14 +1,29 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-	<title>
-		TimeWay
-	</title>
-	<link rel="stylesheet" type="text/css" href="styles.css"/>
-	<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAyesbQMyKVVbBgKVi2g6VX7mop2z96jBo&libraries=visualization"></script>	
+    <title>
+        TimeWay
+    </title>
+    <link rel="stylesheet" type="text/css" href="styles.css" />
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAyesbQMyKVVbBgKVi2g6VX7mop2z96jBo&libraries=visualization,places"></script>
 </head>
+
 <body>
-	<div id="container"></div>
-	<script type="text/javascript" src="app.js"></script>
+    <nav class="navbar navbar-default">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <div class="navbar-form navbar-left">
+                    <div class="form-group">
+                        <input type="text" class="form-control" id="search-box" placeholder="Search">
+                    </div>                    
+                </div>
+            </div>
+        </div>
+    </nav>
+    <div id="container" class="container"></div>
+    <script type="text/javascript" src="app.js"></script>
 </body>
+
 </html>
