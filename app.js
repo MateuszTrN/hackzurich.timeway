@@ -5,12 +5,13 @@
   var SEARCHBOX_ID = "search-box";
   var BOUNDS_CHANGED_EVENT = "bounds_changed";
   var PLACES_CHANGED_EVENT = "places_changed";
-  var POINT_SPACING = 50; // pixels in between points
+  var POINT_SPACING = 60; // pixels in between points
   var DEFAULT_LOCATION = { longitude: 8.515711, latitude: 47.390193 }; // Zurich Technopark
-  var GOOGLE_API_DELAY = 1000; // delay between API calls
-  var SCALING_FACTOR = 1;
-  var HEATMAP_RADIUS = 60;
-  var GOOGLE_ZOOM_LEVEL = 12;
+  var GOOGLE_API_DELAY = 1500; // delay between API calls
+  var GOOGLE_API_BLOCK_SIZE = 25;
+  var HEATMAP_RADIUS = 100;
+  var GOOGLE_ZOOM_LEVEL = 14;
+  
 
   var map;
   var directionsService = new google.maps.DistanceMatrixService();
@@ -22,11 +23,12 @@
     if (heatmapInstance) {
       heatmapInstance.setMap(null)
     }
-
+    console.log(gridData.map(function(a) {return a.weight}));
     heatmapInstance = new google.maps.visualization.HeatmapLayer({
       data: gridData,
       dissipating: true,
       radius: HEATMAP_RADIUS,
+      gradient: ['rgba(0, 0, 0, 1)','rgba(0, 255, 0, 0.5)','rgba(255,255,0,0.5)','rgba(255,0,0,0.5)']
     });
     heatmapInstance.setMap(map);
   };
@@ -42,9 +44,9 @@
     var delta_w = (northEast.lng() - southWest.lng()) / n_width;
     var delta_h = (northEast.lat() - southWest.lat()) / n_height;
 
-    for (var i = 0; i < n_height; i++) {
-      for (var j = 0; j < n_width; j++) {
-        var coords = new google.maps.LatLng(southWest.lat() + (i + 0.5) * delta_h, southWest.lng() + (j + 0.5) *
+    for (var i = 0; i <= n_height; i++) {
+      for (var j = 0; j <= n_width; j++) {
+        var coords = new google.maps.LatLng(southWest.lat() + i * delta_h, southWest.lng() + j *
           delta_w);
         grid.push({ location: coords });
       }
@@ -55,124 +57,122 @@
 
   var getGrid = () => {
     return new Promise((resolveGrid) => {
-
       var locationMatrix = createLocationMatrix();
-      var pages = Math.ceil(locationMatrix.length / 25);
-      var pendingOperations = pages;
-      var pagedLocations = [];
-      for (var k = 0; k < pages;) {
-        for (var i = 0; i < locationMatrix.length; i++) {
-          pagedLocations[k] = pagedLocations[k] || [];
-          pagedLocations[k].push(locationMatrix[i].location);
-          if (i % 25 == 0) k++;
-        }
-      }
 
-      for (var i = 0; i < pages; i++) {
-        var job = setInterval(((i) => () => {
+      var pending = locationMatrix.length;
+
+
+      var delayedBlockRequest = (index) => {
+        setTimeout(() => { 
           directionsService.getDistanceMatrix({
-            origins: [map.getCenter()],
-            destinations: pagedLocations[i],
+            origins: locationMatrix.slice(index, index + GOOGLE_API_BLOCK_SIZE),
+            destinations: [map.getCenter()],
             travelMode: 'TRANSIT',
             transitOptions: {
               departureTime: new Date(2016, 9, 17, 8, 0, 0)
             },
-          }, (data) => {
-            try {
-              data.rows[0].elements.map((element, idx) => {
-                var elementIdx = i * 25 + idx;
-                var duration = element.duration;
-                locationMatrix[elementIdx].weight = duration.value;
-                return locationMatrix[elementIdx];
-              });
-            } catch (err) {
+          }, (data,status) => {
+           if (status === 'OK') {
+            data.rows.map((item, idx) => {
+              try {
+                var time = item.elements[0].duration.value;
+                var itemIdx = index + idx; 
+                locationMatrix[itemIdx].weight = time;
+              } catch(err) { } finally {
+                pending--;
+                if (pending <= 0) {
+                  resolveGrid(locationMatrix);
+                }
+              }
+              
+            });
+          } else {
+            console.log('Directions request failed due to ' + status); 
+            pending -= GOOGLE_API_BLOCK_SIZE;
+          }
+        });
+        },index/GOOGLE_API_BLOCK_SIZE*GOOGLE_API_DELAY);
+      };
 
-            } finally {
-              pendingOperations--;
-            }
-          }, () => pendingOperations--);
-        })(i), GOOGLE_API_DELAY);
+      for (var i = 0; i < locationMatrix.length; i += 25) {
+        delayedBlockRequest(i);
       }
 
-      var interval = setInterval(() => {
-        if (pendingOperations < 1) {
-          clearInterval(interval);
-          clearInterval(job);
-          resolveGrid(locationMatrix);
+    });
+  }
+
+
+    var initApp = () => {
+      return new Promise((resolveCoords, notsupportedGeoLocationHandler) => {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(resolveCoords, notsupportedGeoLocationHandler);
         }
-      })
+      });
+    };
 
-    });
-  }
+    var geoLocationNotSupported = () => {
+      console.log(GEOLOCATION_NOT_SUPPORTED);
+      return initMap({});
+    }
 
-  var initApp = () => {
-    return new Promise((resolveCoords, notsupportedGeoLocationHandler) => {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(resolveCoords, notsupportedGeoLocationHandler);
-      }
-    });
-  };
+    var initMap = (data) => {
+      var coords = data.coords || DEFAULT_LOCATION;
+      currentPosition = new google.maps.LatLng(coords.latitude, coords.longitude);
 
-  var geoLocationNotSupported = () => {
-    console.log(GEOLOCATION_NOT_SUPPORTED);
-    return initMap({});
-  }
+      map = new google.maps.Map(document.getElementById(CONTAINER_ID), {
+        center: currentPosition,
+        zoom: GOOGLE_ZOOM_LEVEL,
+        mapTypeId: google.maps.MapTypeId.ROADMAP,
+        disableDefaultUI: true
+      });
+      var transitLayer = new google.maps.TransitLayer();
+      transitLayer.setMap(map);
 
-  var initMap = (data) => {
-    var coords = data.coords || DEFAULT_LOCATION;
-    currentPosition = new google.maps.LatLng(coords.latitude, coords.longitude);
+      directionsService = new google.maps.DistanceMatrixService();
 
-    map = new google.maps.Map(document.getElementById(CONTAINER_ID), {
-      center: currentPosition,
-      zoom: GOOGLE_ZOOM_LEVEL,
-      mapTypeId: google.maps.MapTypeId.ROADMAP,
-      disableDefaultUI: true
-    });
+      initSearch();
+    }
 
-    directionsService = new google.maps.DistanceMatrixService();
-
-    initSearch();
-  }
-
-  var initSearch = () => {
-    var input = document.getElementById(SEARCHBOX_ID);
-    var searchBox = new google.maps.places.SearchBox(input);
-    var marker = { setMap: function () {} };
-    map.addListener(BOUNDS_CHANGED_EVENT, () => {
-      searchBox.setBounds(map.getBounds());
-    });
-
-    searchBox.addListener(PLACES_CHANGED_EVENT, () => {
-      var places = searchBox.getPlaces();
-      if (places.length == 0) {
-        return;
-      }
-
-      marker.setMap(null);
-      var place = places[0];
-
-      var center = new google.maps.LatLng(
-        place.geometry.location.lat(),
-        place.geometry.location.lng()
-      );
-
-      map.panTo(center);
-      marker = new google.maps.Marker({
-        map: map,
-        title: place.name,
-        position: place.geometry.location,
-        animation: google.maps.Animation.DROP
+    var initSearch = () => {
+      var input = document.getElementById(SEARCHBOX_ID);
+      var searchBox = new google.maps.places.SearchBox(input);
+      var marker = { setMap: function () {} };
+      map.addListener(BOUNDS_CHANGED_EVENT, () => {
+        searchBox.setBounds(map.getBounds());
       });
 
-      getGrid()
+      searchBox.addListener(PLACES_CHANGED_EVENT, () => {
+        var places = searchBox.getPlaces();
+        if (places.length == 0) {
+          return;
+        }
+
+        marker.setMap(null);
+        var place = places[0];
+
+        var center = new google.maps.LatLng(
+          place.geometry.location.lat(),
+          place.geometry.location.lng()
+          );
+
+        map.panTo(center);
+        marker = new google.maps.Marker({
+          map: map,
+          title: place.name,
+          position: place.geometry.location,
+          animation: google.maps.Animation.DROP
+        });
+
+        getGrid()
         .then((grid) => {
+
           generateHeatMap(grid);
         });
-    });
-  };
+      });
+    };
 
-  initApp()
+    initApp()
     .then((data) => {
       initMap(data);
     }, geoLocationNotSupported)
-})();
+  })();
