@@ -5,11 +5,11 @@
   var SEARCHBOX_ID = "search-box";
   var BOUNDS_CHANGED_EVENT = "bounds_changed";
   var PLACES_CHANGED_EVENT = "places_changed";
-  var POINT_SPACING = 45; // pixels in between points
+  var POINT_SPACING = 50; // pixels in between points
   var DEFAULT_LOCATION = { longitude: 8.515711, latitude: 47.390193 }; // Zurich Technopark
-  var GOOGLE_API_DELAY = 400; // delay between API calls
+  var GOOGLE_API_DELAY = 1000; // delay between API calls
   var SCALING_FACTOR = 1;
-  var HEATMAP_RADIUS = 45;
+  var HEATMAP_RADIUS = 60;
   var GOOGLE_ZOOM_LEVEL = 12;
 
   var map;
@@ -59,36 +59,45 @@
       var locationMatrix = createLocationMatrix();
       var pages = Math.ceil(locationMatrix.length / 25);
       var pendingOperations = pages;
+      var pagedLocations = [];
+      for (var k = 0; k < pages;) {
+        for (var i = 0; i < locationMatrix.length; i++) {
+          pagedLocations[k] = pagedLocations[k] || [];
+          pagedLocations[k].push(locationMatrix[i].location);
+          if (i % 25 == 0) k++;
+        }
+      }
 
       for (var i = 0; i < pages; i++) {
-        setTimeout(((i) => () => {
-    directionsService.getDistanceMatrix({
-      origins: [map.getCenter()],
-      destinations: locationMatrix.map(x => x.location).slice(i * 25, i * 25 + 25),
-      travelMode: 'TRANSIT',
-      transitOptions: {
-        departureTime: new Date(2016, 9, 17, 8, 0, 0)
-      },
-    }, (data) => {
-      try {
-        data.rows[0].elements.map((element, idx) => {
-          var elementIdx = i * 25 + idx;
-          var duration = element.duration;
-          locationMatrix[elementIdx].weight = duration.value;
-          return locationMatrix[elementIdx];
-        });
-      } catch (err) {
+        var job = setInterval(((i) => () => {
+          directionsService.getDistanceMatrix({
+            origins: [map.getCenter()],
+            destinations: pagedLocations[i],
+            travelMode: 'TRANSIT',
+            transitOptions: {
+              departureTime: new Date(2016, 9, 17, 8, 0, 0)
+            },
+          }, (data) => {
+            try {
+              data.rows[0].elements.map((element, idx) => {
+                var elementIdx = i * 25 + idx;
+                var duration = element.duration;
+                locationMatrix[elementIdx].weight = duration.value;
+                return locationMatrix[elementIdx];
+              });
+            } catch (err) {
 
-      } finally {
-        pendingOperations--;
-      }
-    }, () => pendingOperations--);
-  })(i), i * GOOGLE_API_DELAY);
+            } finally {
+              pendingOperations--;
+            }
+          }, () => pendingOperations--);
+        })(i), GOOGLE_API_DELAY);
       }
 
       var interval = setInterval(() => {
         if (pendingOperations < 1) {
           clearInterval(interval);
+          clearInterval(job);
           resolveGrid(locationMatrix);
         }
       })
