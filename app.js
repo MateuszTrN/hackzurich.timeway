@@ -23,7 +23,7 @@
     if (heatmapInstance) {
       heatmapInstance.setMap(null)
     }
-    console.log(gridData.map(function(a) {return a.weight}));
+    // console.log(gridData.map(function(a) {return a.weight}));
     heatmapInstance = new google.maps.visualization.HeatmapLayer({
       data: gridData,
       dissipating: true,
@@ -58,6 +58,7 @@
   var getGrid = () => {
     return new Promise((resolveGrid) => {
       var locationMatrix = createLocationMatrix();
+      NProgress.start();
 
       var pending = locationMatrix.length;
 
@@ -80,7 +81,9 @@
                 locationMatrix[itemIdx].weight = time;
               } catch(err) { } finally {
                 pending--;
+                NProgress.set(1 - pending/locationMatrix.length);
                 if (pending <= 0) {
+                  NProgress.done();
                   resolveGrid(locationMatrix);
                 }
               }
@@ -89,6 +92,7 @@
           } else {
             console.log('Directions request failed due to ' + status); 
             pending -= GOOGLE_API_BLOCK_SIZE;
+            Nprogress.inc();
           }
         });
         },index/GOOGLE_API_BLOCK_SIZE*GOOGLE_API_DELAY);
