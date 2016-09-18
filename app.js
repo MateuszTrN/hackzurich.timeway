@@ -114,18 +114,31 @@
   }
 
   var drawMarkers = () => {
+    var labels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    var labelIndex = 0;
+    var infowindow = new google.maps.InfoWindow();
     for (var i = 0; i < flatsMarkers.length; i++) flatsMarkers[i].setMap(null);
 
     apiClient.search(currentPosition.lng(), currentPosition.lat()).then(flatsList => {
       flatsList.map(place => {
-        flatsMarkers.push(new google.maps.Marker({
+        var marker = new google.maps.Marker({
           map: map,
           title: place.title,
           position: place.coords,
-          animation: google.maps.Animation.DROP
-        }));
-      })
-    });
+          animation: google.maps.Animation.DROP,
+          label: labels[labelIndex++ % labels.length],
+          data: place
+        });
+        flatsMarkers.push(marker);
+        google.maps.event.addListener(marker, "click", function () { 
+          var contentString = "<h5>" + marker.data.title 
+              + "</h3><p>" + marker.data.description 
+              + "</p><a href=" + marker.data.url + "' target='_blank'> more </a>";
+          infowindow.setContent(contentString);
+          infowindow.open(map, marker);
+        });
+      });  
+    });   
   }
 
   var initApp = () => {
