@@ -18,7 +18,7 @@ var homeGateClient = (config) => {
               var geoLoc = x.geoLocation.split(',');
               return {
                 title: x.title,
-                description: (x.description || "").substr(0,120) + "...",
+                description: (x.description || "").substr(0,250) + "...",
                 url: 'http://homegate.ch/rent/' + x.advId,
                 picture: x.picFilename1,
                 coords: new google.maps.LatLng(geoLoc[1], geoLoc[0]),
