@@ -11,13 +11,16 @@
   var GOOGLE_API_BLOCK_SIZE = 25;
   var HEATMAP_RADIUS = 100;
   var GOOGLE_ZOOM_LEVEL = 14;
+  var CENTER_CHANGED = "center_changed"
 
   var map;
+  var centerMarker; //for removing after dragging. 
   var directionsService = new google.maps.DistanceMatrixService();
   var currentPosition;
   var heatmapInstance;
   var apiClient = homeGateClient();
   var flatsMarkers = [];
+  var draggingTimeout;
 
   var generateHeatMap = (gridData) => {
     if (heatmapInstance) {
@@ -35,7 +38,7 @@
     });
     $("#infobox").hide();
     $("#legend").removeClass("hidden");
-    $("#colorbar").css("background","linear-gradient(to right," + gradientStops.slice(1).join() + ")");
+    $("#colorbar").css("background", "linear-gradient(to right," + gradientStops.slice(1).join() + ")");
     $("#legend-min").html("Travel time: 0");
     $("#legend-max").html(Math.ceil(Math.max.apply(Math, travelTimes.filter(isFinite)) / 60) + " min");
     heatmapInstance.setMap(map);
@@ -118,30 +121,31 @@
     var infowindow = new google.maps.InfoWindow();
     for (var i = 0; i < flatsMarkers.length; i++) flatsMarkers[i].setMap(null);
 
-      apiClient.search(coords.lng(), coords.lat()).then(flatsList => {
-        flatsList.map(place => {
-          var marker = new google.maps.Marker({
-            map: map,
-            title: place.title,
-            position: place.coords,
-            animation: google.maps.Animation.DROP,
+    apiClient.search(coords.lng(), coords.lat()).then(flatsList => {
+      flatsList.map(place => {
+        var marker = new google.maps.Marker({
+          map: map,
+          title: place.title,
+          position: place.coords,
+         // animation: google.maps.Animation.DROP, //NOTE: Perfomance with the large amount of flats.
           // label: labels[labelIndex++ % labels.length],
           data: place
         });
-          flatsMarkers.push(marker);
-          google.maps.event.addListener(marker, "click", function () { 
-            var contentString = '<div class="popup"><h5>' + marker.data.title;
-            if (marker.data.picture != undefined) {
-              contentString += '</h5><img src="' + marker.data.picture + '"/><p>';
-            } else {
-              contentString += '</h5><p>';
-            }
-            contentString += marker.data.description + '<a href="' + marker.data.url + '" target="_blank"> more on Homegate</a></p></div>';
-            infowindow.setContent(contentString);
-            infowindow.open(map, marker);
-          });
-        });  
-      });   
+        flatsMarkers.push(marker);
+        google.maps.event.addListener(marker, "click", function () {
+          var contentString = '<div class="popup"><h5>' + marker.data.title;
+          if (marker.data.picture != undefined) {
+            contentString += '</h5><img src="' + marker.data.picture + '"/><p>';
+          } else {
+            contentString += '</h5><p>';
+          }
+          contentString += marker.data.description + '<a href="' + marker.data.url +
+            '" target="_blank"> more on Homegate</a></p></div>';
+          infowindow.setContent(contentString);
+          infowindow.open(map, marker);
+        });
+      });
+    });
   }
 
   var initApp = () => {
@@ -167,6 +171,29 @@
     return initMap({});
   }
 
+  var mapCenterChanged = () => {
+    if (draggingTimeout) clearTimeout(draggingTimeout);
+
+    draggingTimeout = setTimeout(() => {
+      directionsService = directionsService || new google.maps.DistanceMatrixService();
+      if(centerMarker) centerMarker.setMap(null);
+
+      centerMarker = new google.maps.Marker({
+        map: map,
+        title: "",
+        position: map.getCenter(),
+        animation: google.maps.Animation.DROP,
+        label: 'O'
+      });
+
+      getGrid()
+        .then((grid) => {
+          generateHeatMap(grid);
+          drawMarkers(map.getCenter());
+        });
+    }, 300)
+  }
+
   var initMap = (data) => {
     var coords = data.coords || DEFAULT_LOCATION;
     currentPosition = new google.maps.LatLng(coords.latitude, coords.longitude);
@@ -177,10 +204,9 @@
       mapTypeId: google.maps.MapTypeId.ROADMAP,
       disableDefaultUI: true
     });
+    map.addListener(CENTER_CHANGED, mapCenterChanged);
     var transitLayer = new google.maps.TransitLayer();
     transitLayer.setMap(map);
-
-    directionsService = new google.maps.DistanceMatrixService();
 
     initSearch();
   }
@@ -189,8 +215,10 @@
     var input = document.getElementById(SEARCHBOX_ID);
     var searchBox = new google.maps.places.SearchBox(input);
     var marker = { setMap: function () {} };
+    var setBoundsTimeout;
     map.addListener(BOUNDS_CHANGED_EVENT, () => {
       searchBox.setBounds(map.getBounds());
+
     });
 
     searchBox.addListener(PLACES_CHANGED_EVENT, () => {
@@ -205,27 +233,14 @@
       var center = new google.maps.LatLng(
         place.geometry.location.lat(),
         place.geometry.location.lng()
-        );
+      );
 
       map.panTo(center);
-      marker = new google.maps.Marker({
-        map: map,
-        title: place.name,
-        position: place.geometry.location,
-        animation: google.maps.Animation.DROP,
-        label: 'O'
-      });
-
-      getGrid()
-      .then((grid) => {
-        generateHeatMap(grid);
-        drawMarkers(center);
-      });
     });
   };
 
   initApp()
-  .then((data) => {
-    initMap(data);
-  }, geoLocationNotSupported)
+    .then((data) => {
+      initMap(data);
+    }, geoLocationNotSupported)
 })();

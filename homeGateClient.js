@@ -5,7 +5,7 @@ var homeGateClient = (config) => {
       return new Promise((success, fail) => {
         $.ajax({
           method: "GET",
-          url: "https://api.tamedia.cloud/homegate/v1c/rs/real-estates?lan=de&cht=rentflat&nrs=400&wdi=1000&nby=" +
+          url: "https://api.tamedia.cloud/homegate/v1c/rs/real-estates?lan=de&cht=rentflat&nrs=400&wdi=3000&nby=" +
             encodeURIComponent(longitude + "," + latitude),
           crossDomain: true,
           beforeSend: function (xhr) {
