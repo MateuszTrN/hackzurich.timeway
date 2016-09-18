@@ -3,48 +3,57 @@
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 
 <head>
-    <title>
-        TimeWay
-    </title>
-    <link rel="stylesheet" type="text/css" href="styles.css" />
-    <link rel='stylesheet' href='nprogress/nprogress.css' />
-    <script src='nprogress/nprogress.js'></script>
-    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-    <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBKHF4ADNaCQvpVdSL4_yra7syXcZf5UFQ&libraries=visualization,places"></script>
-    <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha256-cCueBR6CsyA4/9szpPfrX3s49M9vUU5BgtiJj06wt/s=" crossorigin="anonymous"></script>
+	<title>
+		TimeWay
+	</title>
+	<link rel="stylesheet" type="text/css" href="styles.css" />
+	<link rel='stylesheet' href='nprogress/nprogress.css' />
+	<script src='nprogress/nprogress.js'></script>
+	<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+	<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBKHF4ADNaCQvpVdSL4_yra7syXcZf5UFQ&libraries=visualization,places"></script>
+	<script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha256-cCueBR6CsyA4/9szpPfrX3s49M9vUU5BgtiJj06wt/s=" crossorigin="anonymous"></script>
 </head>
 
 <body>
-    <nav class="navbar navbar-default">
-        <div class="container-fluid">
-            <div class="navbar-header">
-                <div class="navbar-brand"> TimeWay </div>
-                <div class="navbar-form navbar-left">
-                    <div class="form-group navbar-right">
-                        <input type="text" class="form-control" id="search-box" placeholder="Search for a place">
-                    </div>
-                </div>
-            </div>
-        </div>
-    </nav>
-    <div id="wrapper" class="col-md-8 col-centered">
-        <div id="container" class="container"></div>
-        <div style="height:1em"></div>
-        <div id="infobox" class="alert alert-info col-centered" role="alert">
-            Welcome! To get started, select a location from the search bar. A heatmap will then be generated to illustrate the travel times to that location by public transportation.
-        </div>
-    </div>
-    <table id="legend" class="col-centered">
-        <tr>
-            <td id="legend-min" class="padded"></td>
-            <td>
-                <div id="colorbar"></div>
-            </td>
-            <td id="legend-max" class="padded"></td>
-        </tr>
-    </table>
-    <script type="text/javascript" src="homeGateClient.js"></script>
-    <script type="text/javascript" src="app.js"></script>
+	<nav class="navbar navbar-default">
+		<div class="container-fluid">
+			<div class="navbar-header">
+				<div class="navbar-brand"> TimeWay </div>
+				<div class="navbar-form navbar-left">
+					<div class="form-group navbar-right">
+						<input type="text" class="form-control" id="search-box" placeholder="Search for a place">
+					</div>
+				</div>
+			</div>
+		</div>
+	</nav>
+	<div id="row">
+		<div id="infobox" class="alert alert-info col-md-10 col-md-offset-1" role="alert">
+			Welcome! To get started, select a location from the search bar. A heatmap will then be generated to illustrate the travel times to that location by public transportation. Additionally, if you search 
+			<b> in Switzerland</b>, flats will be found around that location.
+		</div>
+	</div>
+	<div class="row">
+		<div id="container" class="container col-md-8 col-md-offset-2"></div>
+	</div>
+	<div style="height:1em"></div>
+	<div id="row">
+		<table id="legend" class="col-centered hidden">
+			<tr>
+				<td id="legend-min" class="padded"></td>
+				<td>
+					<div id="colorbar"></div>
+				</td>
+				<td id="legend-max" class="padded"></td>
+				<td>
+					<div class="swatch"></div>
+				</td>
+				<td id="legend-undefined">No data</td> 
+			</tr>
+		</table>
+	</div>
+	<script type="text/javascript" src="homeGateClient.js"></script>
+	<script type="text/javascript" src="app.js"></script>
 </body>
 
 </html>

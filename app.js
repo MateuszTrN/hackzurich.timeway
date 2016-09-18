@@ -33,12 +33,11 @@
       radius: HEATMAP_RADIUS,
       gradient: gradientStops
     });
-    document.getElementById("infobox").style.display = "none";
-    document.getElementById("legend").style.display = "table";
-    document.getElementById("colorbar").style.background = "linear-gradient(to right," + gradientStops.slice(1).join() + ")";
-    document.getElementById("legend-min").innerHTML = "Travel time: 0";
-    document.getElementById("legend-max").innerHTML = Math.ceil(Math.max.apply(Math, travelTimes.filter(isFinite)) / 60) +
-      " min";
+    $("#infobox").hide();
+    $("#legend").removeClass("hidden");
+    $("#colorbar").css("background","linear-gradient(to right," + gradientStops.slice(1).join() + ")");
+    $("#legend-min").html("Travel time: 0");
+    $("#legend-max").html(Math.ceil(Math.max.apply(Math, travelTimes.filter(isFinite)) / 60) + " min");
     heatmapInstance.setMap(map);
   };
 
@@ -126,14 +125,18 @@
           title: place.title,
           position: place.coords,
           animation: google.maps.Animation.DROP,
-          label: labels[labelIndex++ % labels.length],
+          // label: labels[labelIndex++ % labels.length],
           data: place
         });
         flatsMarkers.push(marker);
         google.maps.event.addListener(marker, "click", function () { 
-          var contentString = "<h5>" + marker.data.title 
-              + "</h3><p>" + marker.data.description 
-              + "</p><a href=" + marker.data.url + "' target='_blank'> more </a>";
+          var contentString = '<div class="popup"><h5>' + marker.data.title;
+          if (marker.data.picture != undefined) {
+              contentString += '</h5><img src="' + marker.data.picture + '"/><p>';
+          } else {
+            contentString += '</h5><p>';
+          }
+          contentString += marker.data.description + '<a href="' + marker.data.url + '" target="_blank"> more on Homegate</a></p></div>';
           infowindow.setContent(contentString);
           infowindow.open(map, marker);
         });
@@ -199,7 +202,8 @@
         map: map,
         title: place.name,
         position: place.geometry.location,
-        animation: google.maps.Animation.DROP
+        animation: google.maps.Animation.DROP,
+        label: 'O'
       });
 
       getGrid()

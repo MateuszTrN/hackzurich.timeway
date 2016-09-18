@@ -3,14 +3,23 @@
     margin: 0 auto;
 }
 
+.popup img{
+	height: 60px;
+	float: left;
+	margin-right: 10px; 
+}
+
 #container {
 	height: 550px;
 }
-#legend {
-	display: none;
-}
+
 #legend td {
     padding: 5px;
+}
+.swatch {
+    height: 1em;
+    width: 1em;
+    background: rgba(0,0,0,0.6);
 }
 
 #colorbar {
