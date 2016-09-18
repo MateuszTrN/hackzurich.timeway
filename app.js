@@ -96,7 +96,7 @@
           } else {
             console.log('Directions request failed due to ' + status); 
             pending -= GOOGLE_API_BLOCK_SIZE;
-            Nprogress.inc();
+            NProgress.inc();
           }
         });
         },index/GOOGLE_API_BLOCK_SIZE*GOOGLE_API_DELAY);

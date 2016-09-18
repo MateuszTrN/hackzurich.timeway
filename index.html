@@ -7,9 +7,10 @@
         TimeWay
     </title>
     <link rel="stylesheet" type="text/css" href="styles.css" />
+    <link rel='stylesheet' href='nprogress/nprogress.css' />
+    <script src='nprogress/nprogress.js'></script>
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
     <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBKHF4ADNaCQvpVdSL4_yra7syXcZf5UFQ&libraries=visualization,places"></script>
-    <!-- <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAyesbQMyKVVbBgKVi2g6VX7mop2z96jBo&libraries=visualization,places"></script> -->
     <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha256-cCueBR6CsyA4/9szpPfrX3s49M9vUU5BgtiJj06wt/s=" crossorigin="anonymous"></script>
 </head>
 
@@ -17,57 +18,34 @@
     <nav class="navbar navbar-default">
         <div class="container-fluid">
             <div class="navbar-header">
+                <div class="navbar-brand"> TimeWay </div>
                 <div class="navbar-form navbar-left">
-                    <div class="form-group">
-                        <input type="text" class="form-control" id="search-box" placeholder="Search">
-                    </div>                    
+                    <div class="form-group navbar-right">
+                        <input type="text" class="form-control" id="search-box" placeholder="Search for a place">
+                    </div>
                 </div>
             </div>
         </div>
     </nav>
-    <div id="container" class="container"></div>
+    <div id="wrapper" class="col-md-8 col-centered">
+        <div id="container" class="container"></div>
+        <div style="height:1em"></div>
+        <div id="infobox" class="alert alert-info col-centered" role="alert">
+            Welcome! To get started, select a location from the search bar. A heatmap will then be generated to illustrate the travel times to that location by public transportation.
+        </div>
+    </div>
+    <table id="legend" class="col-centered">
+        <tr>
+            <td id="legend-min" class="padded"></td>
+            <td>
+                <div id="colorbar"></div>
+            </td>
+            <td id="legend-max" class="padded"></td>
+        </tr>
+    </table>
+    </div>
     <script type="text/javascript" src="homeGateClient.js"></script>
     <script type="text/javascript" src="app.js"></script>
-	<title>
-		TimeWay
-	</title>
-	<link rel="stylesheet" type="text/css" href="styles.css" />
-	<link rel='stylesheet' href='nprogress/nprogress.css'/>
-	<script src='nprogress/nprogress.js'></script>
-
-	<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-	<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBKHF4ADNaCQvpVdSL4_yra7syXcZf5UFQ&libraries=visualization,places"></script>
-</head>
-
-<body>
-	<nav class="navbar navbar-default">
-		<div class="container-fluid">
-			<div class="navbar-header">
-				<div class="navbar-brand"> TimeWay </div>
-				<div class="navbar-form navbar-left">
-					<div class="form-group navbar-right">
-						<input type="text" class="form-control" id="search-box" placeholder="Search for a place">
-					</div>                    
-				</div>
-			</div>
-		</div>
-	</nav>
-	<div id="wrapper" class="col-md-8 col-centered">
-		<div id="container" class="container"></div>
-		<div style="height:1em"></div> 
-		<div id="infobox" class="alert alert-info col-centered" role="alert">
-			Welcome! To get started, select a location from the search bar. A heatmap will then be generated to illustrate the travel times to that location by public transportation.
-		</div>
-	</div>
-	<table id="legend" class="col-centered">
-	<tr>
-	<td id="legend-min" class="padded"></td>
-	<td><div id="colorbar"></div></td>
-	<td id="legend-max" class="padded"></td>
-	</tr>
-	</table>
-	</div>
-	<script type="text/javascript" src="app.js"></script>
 </body>
 
 </html>
