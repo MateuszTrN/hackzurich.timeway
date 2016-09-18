@@ -118,33 +118,43 @@
     var infowindow = new google.maps.InfoWindow();
     for (var i = 0; i < flatsMarkers.length; i++) flatsMarkers[i].setMap(null);
 
-    apiClient.search(coords.lng(), coords.lat()).then(flatsList => {
-      flatsList.map(place => {
-        var marker = new google.maps.Marker({
-          map: map,
-          title: place.title,
-          position: place.coords,
-          animation: google.maps.Animation.DROP,
+      apiClient.search(coords.lng(), coords.lat()).then(flatsList => {
+        flatsList.map(place => {
+          var marker = new google.maps.Marker({
+            map: map,
+            title: place.title,
+            position: place.coords,
+            animation: google.maps.Animation.DROP,
           // label: labels[labelIndex++ % labels.length],
           data: place
         });
-        flatsMarkers.push(marker);
-        google.maps.event.addListener(marker, "click", function () { 
-          var contentString = '<div class="popup"><h5>' + marker.data.title;
-          if (marker.data.picture != undefined) {
+          flatsMarkers.push(marker);
+          google.maps.event.addListener(marker, "click", function () { 
+            var contentString = '<div class="popup"><h5>' + marker.data.title;
+            if (marker.data.picture != undefined) {
               contentString += '</h5><img src="' + marker.data.picture + '"/><p>';
-          } else {
-            contentString += '</h5><p>';
-          }
-          contentString += marker.data.description + '<a href="' + marker.data.url + '" target="_blank"> more on Homegate</a></p></div>';
-          infowindow.setContent(contentString);
-          infowindow.open(map, marker);
-        });
-      });  
-    });   
+            } else {
+              contentString += '</h5><p>';
+            }
+            contentString += marker.data.description + '<a href="' + marker.data.url + '" target="_blank"> more on Homegate</a></p></div>';
+            infowindow.setContent(contentString);
+            infowindow.open(map, marker);
+          });
+        });  
+      });   
   }
 
   var initApp = () => {
+    $(".navbar-brand").click((e) => {
+      e.preventDefault();
+      location.reload();
+    });
+
+    $(".close-link").click((e) => {
+      e.preventDefault();
+      $("#infobox").hide();
+    });
+
     return new Promise((resolveCoords, notsupportedGeoLocationHandler) => {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(resolveCoords, notsupportedGeoLocationHandler);
@@ -195,7 +205,7 @@
       var center = new google.maps.LatLng(
         place.geometry.location.lat(),
         place.geometry.location.lng()
-      );
+        );
 
       map.panTo(center);
       marker = new google.maps.Marker({
@@ -207,15 +217,15 @@
       });
 
       getGrid()
-        .then((grid) => {
-          generateHeatMap(grid);
-          drawMarkers(center);
-        });
+      .then((grid) => {
+        generateHeatMap(grid);
+        drawMarkers(center);
+      });
     });
   };
 
   initApp()
-    .then((data) => {
-      initMap(data);
-    }, geoLocationNotSupported)
+  .then((data) => {
+    initMap(data);
+  }, geoLocationNotSupported)
 })();

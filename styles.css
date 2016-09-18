@@ -1,12 +1,18 @@
-.col-centered{
+.col-centered {
     float: none;
     margin: 0 auto;
 }
 
-.popup img{
+.popup img {
 	height: 60px;
 	float: left;
 	margin-right: 10px; 
+}
+
+.close-link {
+	padding-left: 1em;
+	text-decoration: underline;
+	font-weight: bold;
 }
 
 #container {
