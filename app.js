@@ -113,13 +113,13 @@
     });
   }
 
-  var drawMarkers = () => {
+  var drawMarkers = (coords) => {
     var labels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     var labelIndex = 0;
     var infowindow = new google.maps.InfoWindow();
     for (var i = 0; i < flatsMarkers.length; i++) flatsMarkers[i].setMap(null);
 
-    apiClient.search(currentPosition.lng(), currentPosition.lat()).then(flatsList => {
+    apiClient.search(coords.lng(), coords.lat()).then(flatsList => {
       flatsList.map(place => {
         var marker = new google.maps.Marker({
           map: map,
@@ -205,7 +205,7 @@
       getGrid()
         .then((grid) => {
           generateHeatMap(grid);
-          drawMarkers();
+          drawMarkers(center);
         });
     });
   };
