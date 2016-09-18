@@ -1,4 +1,19 @@
+.col-centered{
+    float: none;
+    margin: 0 auto;
+}
+
 #container {
 	height: 550px;
-	width: 800px;
+}
+#legend {
+	display: none;
+}
+#legend td {
+    padding: 5px;
+}
+
+#colorbar {
+	width: 200px;
+	height: 1em;
 }

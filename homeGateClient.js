@@ -1,11 +1,11 @@
 var homeGateClient = (config) => {
 
   return {
-    searchWithinArea: (southWestLocation, northEastLocation) => {
+    searchWithinArea: (location) => { 
       return new Promise((success, fail) => {       
          $.ajax({
           method: "GET",
-          url: "https://api.tamedia.cloud/homegate/v1c/rs/real-estates?lan=de&cht=rentflat&nrs=300",          
+          url: "https://api.tamedia.cloud/homegate/v1c/rs/real-estates?lan=de&cht=rentflat&nrs=300&wrg=2000&nby=" + encodeURIComponent(location.longitude + "," + location.latitude),          
           crossDomain: true,
           beforeSend: function (xhr) {
             debugger
